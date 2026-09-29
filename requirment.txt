@@ -1,0 +1,567 @@
+If you're building a professional agency website that will represent your business and also generate leads, the project should be treated as a complete business platform rather than just a marketing website.
+
+Agency Website Requirements Document
+Project Overview
+Business Name
+
+(Your Agency Name)
+
+Services
+
+Current Services:
+
+Custom Website Development
+Web Application Development
+Business Automation Solutions
+AI Integrations
+Video Editing
+Photo Editing
+Digital Marketing
+SEO Optimization
+Social Media Marketing
+
+Future Expansion Services:
+
+Mobile App Development
+UI/UX Design
+Branding & Identity Design
+E-commerce Solutions
+AI Chatbots
+CRM Solutions
+Cloud Services
+Maintenance & Support
+Content Creation
+Consulting Services
+Technology Stack
+Frontend
+Next.js 15+
+TypeScript
+ShadCN UI
+Tailwind CSS
+Framer Motion
+React Hook Form
+Zod Validation
+TanStack Query
+Axios
+Backend
+Node.js
+Express.js
+TypeScript
+Prisma ORM
+Database
+PostgreSQL
+Authentication
+JWT
+OAuth (Google Login)
+File Storage
+AWS S3 / Cloudinary
+Email Service
+Resend
+Nodemailer
+Deployment
+
+Frontend:
+
+Vercel
+
+Backend:
+
+Railway / Render / VPS
+
+Database:
+
+PostgreSQL
+Website Goals
+Primary Goals
+Generate Leads
+Showcase Portfolio
+Build Trust
+Display Services
+Collect Project Requirements
+Book Consultation Calls
+Secondary Goals
+Blog SEO
+Client Testimonials
+Newsletter Subscribers
+Career Applications
+Website Pages Structure
+Public Pages
+Home Page
+
+Sections:
+
+Hero Section
+Strong headline
+CTA buttons
+Background animation
+Statistics
+
+Example:
+
+200+ Projects Completed
+50+ Happy Clients
+5+ Years Experience
+
+Buttons:
+
+Get Free Consultation
+View Portfolio
+Trusted By Section
+
+Client logos
+
+Services Overview
+
+Cards:
+
+Website Development
+Automation
+Video Editing
+Photo Editing
+Digital Marketing
+Why Choose Us
+Fast Delivery
+Experienced Team
+Affordable Pricing
+Ongoing Support
+Portfolio Preview
+
+Latest Projects
+
+Process Section
+Discovery
+Planning
+Design
+Development
+Testing
+Launch
+Testimonials
+
+Carousel
+
+FAQ
+
+Accordion
+
+CTA Section
+
+Book Free Strategy Call
+
+About Page
+
+Sections:
+
+Company Story
+Mission
+Vision
+Core Values
+Team Members
+Achievements
+Certifications
+Services Page
+Website Development
+
+Sub-services:
+
+Business Website
+Portfolio Website
+E-commerce Website
+SaaS Dashboard
+Custom Web Applications
+Automation
+
+Sub-services:
+
+Workflow Automation
+CRM Automation
+AI Automation
+Email Automation
+Video Editing
+
+Sub-services:
+
+YouTube Videos
+Short-form Content
+Ads Editing
+Motion Graphics
+Photo Editing
+
+Sub-services:
+
+Retouching
+Product Editing
+Thumbnail Design
+Social Media Graphics
+Digital Marketing
+
+Sub-services:
+
+SEO
+PPC
+Social Media Marketing
+Content Marketing
+Service Detail Page
+
+Dynamic Routing
+
+/services/[slug]
+
+Example:
+
+/services/web-development
+/services/automation
+/services/digital-marketing
+
+Sections:
+
+Overview
+Features
+Process
+Pricing
+FAQs
+CTA
+Portfolio Page
+
+Filter Projects By:
+
+Web Development
+Automation
+Marketing
+Editing
+
+Project Card:
+
+Thumbnail
+Technologies
+Description
+Live URL
+Portfolio Details Page
+/portfolio/[slug]
+
+Sections:
+
+Project Overview
+Challenges
+Solutions
+Technologies
+Screenshots
+Results
+Pricing Page
+
+Packages:
+
+Starter
+Professional
+Enterprise
+
+Include:
+
+Features
+Timeline
+CTA
+Blog Page
+/blog
+
+Features:
+
+Search
+Categories
+Tags
+Pagination
+Blog Details
+/blog/[slug]
+
+SEO optimized
+
+Testimonials Page
+
+Client Reviews
+
+Video Testimonials
+
+Careers Page
+
+Job Listings
+
+Application Form
+
+Resume Upload
+
+Contact Page
+
+Fields:
+
+Name
+Email
+Phone
+Company
+Budget
+Service Required
+Message
+Consultation Booking Page
+
+Calendly Integration
+
+Lead Generation Features
+Contact Form
+
+Store in database
+
+Send email notification
+
+Project Inquiry Form
+
+Fields:
+
+Project Type
+Budget
+Deadline
+Requirements
+Free Audit Form
+
+For marketing leads
+
+Newsletter
+
+Email subscription
+
+Admin Dashboard
+
+Route:
+
+/admin
+Dashboard Overview
+
+Statistics:
+
+Total Leads
+Total Projects
+Blog Posts
+Revenue
+Lead Management
+
+Features:
+
+View Leads
+Update Status
+Assign Team Member
+
+Statuses:
+
+New
+Contacted
+Proposal Sent
+Won
+Lost
+Portfolio Management
+
+CRUD Operations
+
+Blog Management
+
+CRUD Operations
+
+Rich Text Editor
+
+Team Management
+
+CRUD
+
+Testimonials Management
+
+CRUD
+
+Services Management
+
+CRUD
+
+Career Management
+
+CRUD
+
+Settings
+SEO Settings
+Social Media
+Email Templates
+Company Information
+SEO Requirements
+Technical SEO
+Sitemap.xml
+Robots.txt
+Structured Data
+Open Graph
+Twitter Cards
+Performance
+
+Target:
+
+Lighthouse 95+
+Core Web Vitals Green
+Security Requirements
+Rate Limiting
+CSRF Protection
+XSS Protection
+Input Validation
+SQL Injection Prevention
+JWT Authentication
+Secure Cookies
+Database Design
+Users
+id
+name
+email
+password
+role
+createdAt
+Services
+id
+title
+slug
+description
+icon
+image
+createdAt
+Portfolio
+id
+title
+slug
+description
+thumbnail
+gallery
+technologies
+liveUrl
+createdAt
+Blogs
+id
+title
+slug
+content
+thumbnail
+authorId
+createdAt
+Leads
+id
+name
+email
+phone
+service
+budget
+message
+status
+createdAt
+Testimonials
+id
+clientName
+company
+image
+rating
+review
+createdAt
+Careers
+id
+title
+department
+location
+salary
+description
+createdAt
+Applications
+id
+careerId
+name
+email
+resume
+createdAt
+Animations
+
+Use Framer Motion
+
+Examples:
+
+Page Transitions
+Scroll Reveal
+Hover Effects
+Number Counters
+Portfolio Animations
+Testimonial Carousel
+UI/UX Requirements
+
+Design Style:
+
+Modern Agency
+Minimalistic
+Premium Feel
+
+Components:
+
+Responsive Navbar
+Mega Menu
+Footer
+Modals
+Drawers
+Dialogs
+Tables
+Forms
+Charts
+Folder Structure
+src/
+├── app/
+├── components/
+│   ├── ui/
+│   ├── layout/
+│   ├── sections/
+│   └── forms/
+├── features/
+│   ├── services/
+│   ├── portfolio/
+│   ├── blog/
+│   ├── leads/
+│   └── admin/
+├── lib/
+├── hooks/
+├── services/
+├── store/
+├── types/
+├── validations/
+├── prisma/
+└── middleware/
+Future Features Roadmap
+
+Phase 2:
+
+AI Chatbot
+Client Portal
+Invoice System
+Proposal Generator
+Project Tracking
+
+Phase 3:
+
+CRM
+Team Collaboration
+Analytics Dashboard
+Subscription Billing
+
+Phase 4:
+
+SaaS Platform
+White-label Solutions
+AI Content Generator
+AI Marketing Assistant
+Recommended MVP Timeline
+Week 1
+Design System
+Database Setup
+Authentication
+Week 2
+Public Website Pages
+Week 3
+Portfolio + Blog
+Week 4
+Lead Management Dashboard
+Week 5
+SEO + Optimization
+Week 6
+Testing + Deployment
+
+This scope is professional-agency level and scalable enough to support future services, client management, automation offerings, and lead generation without needing a major rewrite later.
