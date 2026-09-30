@@ -1,0 +1,921 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  PROJECT_MANAGER
+  SALES_MANAGER
+  SEO_SPECIALIST
+  SMM_MANAGER
+  CONTENT_WRITER
+  VIDEO_EDITOR
+  PHOTO_EDITOR
+  AUTOMATION_SPECIALIST
+  AI_ENGINEER
+  FINANCE
+  CLIENT
+  EDITOR
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  MEETING_SCHEDULED
+  PROPOSAL_SENT
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum LeadType {
+  CONTACT
+  INQUIRY
+  AUDIT
+  NEWSLETTER
+  CONSULTATION
+  CHECKOUT
+}
+
+enum OrderStatus {
+  NEW
+  REVIEW
+  ACCEPTED
+  IN_PROGRESS
+  CLIENT_REVIEW
+  REVISION
+  COMPLETED
+  CANCELLED
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  ON_HOLD
+  CLIENT_REVIEW
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  BLOCKED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskType {
+  WEB_UI_DESIGN
+  WEB_FRONTEND
+  WEB_BACKEND
+  WEB_TESTING
+  WEB_DEPLOYMENT
+  AUTO_REQUIREMENT
+  AUTO_WORKFLOW
+  AUTO_API_SETUP
+  AUTO_TESTING
+  AI_SETUP
+  AI_PROMPT
+  AI_API_INTEGRATION
+  AI_DEPLOYMENT
+  VIDEO_REVIEW
+  VIDEO_EDITING
+  VIDEO_EFFECTS
+  VIDEO_EXPORT
+  PHOTO_RETOUCH
+  PHOTO_COLOR
+  PHOTO_EXPORT
+  MKT_SEO
+  MKT_CONTENT
+  MKT_ADS
+  MKT_REPORTING
+  GENERAL
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  STRIPE
+  PAYPAL
+  BANK_TRANSFER
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum ProposalStatus {
+  DRAFT
+  SENT
+  VIEWED
+  ACCEPTED
+  REJECTED
+}
+
+enum ContractStatus {
+  DRAFT
+  SENT
+  SIGNED
+  EXPIRED
+  RENEWED
+}
+
+enum NotificationType {
+  NEW_LEAD
+  NEW_PAYMENT
+  NEW_TASK
+  CLIENT_MESSAGE
+  PROJECT_DEADLINE
+  INVOICE_REMINDER
+  CONTRACT_RENEWAL
+  SYSTEM
+}
+
+enum ActivityType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  STATUS_CHANGE
+  ASSIGNMENT
+  PAYMENT
+  UPLOAD
+}
+
+enum ExpenseCategory {
+  TEAM
+  SOFTWARE
+  API
+  AI
+  MARKETING
+  OTHER
+}
+
+enum MessageThreadType {
+  DIRECT
+  GROUP
+  PROJECT
+  CLIENT_TICKET
+}
+
+enum AutomationTrigger {
+  LEAD_CREATED
+  CLIENT_CREATED
+  ORDER_ACCEPTED
+  INVOICE_OVERDUE
+  CONTRACT_EXPIRING
+  TASK_OVERDUE
+  LEAD_INACTIVE
+}
+
+enum AutomationAction {
+  ASSIGN_LEAD
+  SEND_EMAIL
+  CREATE_TASK
+  SEND_NOTIFICATION
+}
+
+enum DealStage {
+  QUALIFICATION
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+// ─── RBAC ────────────────────────────────────────────────────────────────────
+
+model Permission {
+  id          String           @id @default(cuid())
+  resource    String
+  action      String
+  description String?
+  roles       RolePermission[]
+
+  @@unique([resource, action])
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  role         UserRole
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([role, permissionId])
+}
+
+// ─── Users & Auth ─────────────────────────────────────────────────────────────
+
+model User {
+  id          String     @id @default(cuid())
+  name        String
+  email       String     @unique
+  password    String
+  role        UserRole   @default(EDITOR)
+  status      UserStatus @default(ACTIVE)
+  avatar      String?
+  clientId    String?
+  client      Client?    @relation(fields: [clientId], references: [id])
+  lastLoginAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  blogs            Blog[]
+  leads            Lead[]              @relation("AssignedLeads")
+  assignedTasks    Task[]              @relation("TaskAssignee")
+  createdTasks     Task[]              @relation("TaskCreator")
+  projects         ProjectMember[]
+  orders           Order[]             @relation("OrderManager")
+  notifications    Notification[]
+  activityLogs     ActivityLog[]
+  loginHistory     LoginHistory[]
+  timeEntries      TimeEntry[]
+  sentMessages     Message[]
+  threadMembers    MessageThreadMember[]
+  meetings         MeetingAttendee[]
+  createdMeetings  Meeting[]           @relation("MeetingCreator")
+  expenses         Expense[]
+  subscriptions    ClientSubscription[] @relation("SubscriptionTeam")
+}
+
+model LoginHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+// ─── CRM ─────────────────────────────────────────────────────────────────────
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  phone       String?
+  company     String?
+  website     String?
+  address     String?
+  industry    String?
+  notes       String?  @db.Text
+  avatar      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users         User[]
+  clientNotes   ClientNote[]
+  clientFiles   ClientFile[]
+  subscriptions ClientSubscription[]
+  orders        Order[]
+  projects      Project[]
+  invoices      Invoice[]
+  proposals     Proposal[]
+  contracts     Contract[]
+  deals         Deal[]
+  aiCostLogs    AiCostLog[]
+  marketingReports MarketingReport[]
+}
+
+model ClientNote {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
+  authorId  String?
+  createdAt DateTime @default(now())
+}
+
+model ClientFile {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name      String
+  url       String
+  type      String   @default("document")
+  size      Int?
+  createdAt DateTime @default(now())
+}
+
+model Deal {
+  id          String    @id @default(cuid())
+  title       String
+  clientId    String?
+  client      Client?   @relation(fields: [clientId], references: [id])
+  leadId      String?   @unique
+  lead        Lead?     @relation(fields: [leadId], references: [id])
+  value       Float?
+  stage       DealStage @default(QUALIFICATION)
+  assignedToId String?
+  notes       String?   @db.Text
+  closedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Lead {
+  id           String     @id @default(cuid())
+  name         String
+  email        String
+  phone        String?
+  company      String?
+  service      String?
+  budget       String?
+  message      String?    @db.Text
+  projectType  String?
+  deadline     String?
+  requirements String?    @db.Text
+  type         LeadType   @default(CONTACT)
+  status       LeadStatus @default(NEW)
+  leadScore    Int        @default(0)
+  source       String?
+  followUpAt   DateTime?
+  assignedToId String?
+  assignedTo   User?      @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  deal         Deal?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  activities LeadActivity[]
+}
+
+model LeadActivity {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type      String
+  content   String   @db.Text
+  authorId  String?
+  createdAt DateTime @default(now())
+}
+
+// ─── Services ──────────────────────────────────────────────────────────────────
+
+model Service {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String   @db.Text
+  shortDesc   String?
+  icon        String?
+  image       String?
+  features    String[] @default([])
+  process     Json?
+  pricing     Json?
+  faqs        Json?
+  order       Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category ServiceCategory?
+}
+
+model ServiceCategory {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String?
+  icon        String?
+  order       Int              @default(0)
+  serviceId   String?          @unique
+  service     Service?         @relation(fields: [serviceId], references: [id])
+  packages    ServicePackage[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model ServicePackage {
+  id           String          @id @default(cuid())
+  categoryId   String
+  category     ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name         String
+  slug         String
+  price        String
+  priceCents   Int?
+  deliveryTime String
+  description  String?
+  features     String[]        @default([])
+  metadata     Json?
+  popular      Boolean         @default(false)
+  order        Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  subscriptions ClientSubscription[]
+  orders        Order[]
+  projects      Project[]
+
+  @@unique([categoryId, slug])
+}
+
+model ClientSubscription {
+  id          String             @id @default(cuid())
+  clientId    String
+  client      Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  packageId   String
+  package     ServicePackage     @relation(fields: [packageId], references: [id])
+  status      SubscriptionStatus @default(PENDING)
+  startDate   DateTime?
+  endDate     DateTime?
+  monthlyFee  Float?
+  notes       String?            @db.Text
+  assignedToId String?
+  assignedTo  User?              @relation("SubscriptionTeam", fields: [assignedToId], references: [id])
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+// ─── Orders & Projects ─────────────────────────────────────────────────────────
+
+model Order {
+  id          String      @id @default(cuid())
+  orderNumber String      @unique
+  clientId    String
+  client      Client      @relation(fields: [clientId], references: [id])
+  packageId   String
+  package     ServicePackage @relation(fields: [packageId], references: [id])
+  price       Float
+  status      OrderStatus @default(NEW)
+  notes       String?     @db.Text
+  managerId   String?
+  manager     User?       @relation("OrderManager", fields: [managerId], references: [id])
+  project     Project?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  title       String
+  clientId    String
+  client      Client        @relation(fields: [clientId], references: [id])
+  packageId   String?
+  package     ServicePackage? @relation(fields: [packageId], references: [id])
+  orderId     String?       @unique
+  order       Order?        @relation(fields: [orderId], references: [id])
+  status      ProjectStatus @default(PLANNING)
+  progress    Int           @default(0)
+  deadline    DateTime?
+  stagingUrl  String?
+  liveUrl     String?
+  description String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  members    ProjectMember[]
+  tasks      Task[]
+  milestones Milestone[]
+  files      ProjectFile[]
+  threads    MessageThread[]
+}
+
+model ProjectMember {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String  @default("member")
+
+  @@unique([projectId, userId])
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  title       String
+  description String?      @db.Text
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      Task?        @relation("Subtasks", fields: [parentId], references: [id])
+  subtasks    Task[]       @relation("Subtasks")
+  type        TaskType     @default(GENERAL)
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  kanbanCol   String       @default("todo")
+  assigneeId  String?
+  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creatorId   String?
+  creator     User?        @relation("TaskCreator", fields: [creatorId], references: [id])
+  dueDate     DateTime?
+  completedAt DateTime?
+  order       Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  timeEntries TimeEntry[]
+}
+
+model Milestone {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  dueDate     DateTime?
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+}
+
+model ProjectFile {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  url       String
+  type      String   @default("document")
+  size      Int?
+  createdAt DateTime @default(now())
+}
+
+// ─── Finance ───────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  clientId      String
+  client        Client        @relation(fields: [clientId], references: [id])
+  status        InvoiceStatus @default(DRAFT)
+  lineItems     Json
+  subtotal      Float
+  tax           Float         @default(0)
+  total         Float
+  dueDate       DateTime?
+  pdfUrl        String?
+  notes         String?       @db.Text
+  sentAt        DateTime?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  payments Payment[]
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  invoiceId String
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id])
+  amount    Float
+  method    PaymentMethod
+  status    PaymentStatus @default(PENDING)
+  reference String?
+  metadata  Json?
+  createdAt DateTime      @default(now())
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  title       String
+  amount      Float
+  category    ExpenseCategory @default(OTHER)
+  description String?
+  userId      String?
+  user        User?           @relation(fields: [userId], references: [id])
+  date        DateTime        @default(now())
+  createdAt   DateTime        @default(now())
+}
+
+model AiCostLog {
+  id        String   @id @default(cuid())
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id])
+  provider  String
+  model     String?
+  tokens    Int      @default(0)
+  cost      Float
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+// ─── Proposals & Contracts ─────────────────────────────────────────────────────
+
+model Proposal {
+  id        String         @id @default(cuid())
+  title     String
+  clientId  String
+  client    Client         @relation(fields: [clientId], references: [id])
+  content   String         @db.Text
+  status    ProposalStatus @default(DRAFT)
+  value     Float?
+  sentAt    DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model Contract {
+  id           String         @id @default(cuid())
+  title        String
+  clientId     String
+  client       Client         @relation(fields: [clientId], references: [id])
+  fileUrl      String?
+  status       ContractStatus @default(DRAFT)
+  renewalDate  DateTime?
+  signedAt     DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+// ─── Communication ─────────────────────────────────────────────────────────────
+
+model MessageThread {
+  id        String            @id @default(cuid())
+  title     String?
+  type      MessageThreadType @default(DIRECT)
+  projectId String?
+  project   Project?          @relation(fields: [projectId], references: [id])
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  members  MessageThreadMember[]
+  messages Message[]
+}
+
+model MessageThreadMember {
+  id       String        @id @default(cuid())
+  threadId String
+  thread   MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+}
+
+model Message {
+  id        String        @id @default(cuid())
+  threadId  String
+  thread    MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User          @relation(fields: [senderId], references: [id])
+  content   String        @db.Text
+  read      Boolean       @default(false)
+  createdAt DateTime      @default(now())
+}
+
+// ─── Calendar & Time ───────────────────────────────────────────────────────────
+
+model Meeting {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  startTime   DateTime
+  endTime     DateTime
+  location    String?
+  meetingUrl  String?
+  creatorId   String
+  creator     User     @relation("MeetingCreator", fields: [creatorId], references: [id])
+  clientId    String?
+  projectId   String?
+  createdAt   DateTime @default(now())
+
+  attendees MeetingAttendee[]
+}
+
+model MeetingAttendee {
+  id        String  @id @default(cuid())
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+}
+
+model TimeEntry {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId    String?
+  task      Task?     @relation(fields: [taskId], references: [id])
+  startTime DateTime
+  endTime   DateTime?
+  duration  Int?
+  notes     String?
+  createdAt DateTime  @default(now())
+}
+
+// ─── Notifications & Activity ──────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  read      Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+}
+
+model ActivityLog {
+  id         String       @id @default(cuid())
+  userId     String?
+  user       User?        @relation(fields: [userId], references: [id])
+  type       ActivityType
+  action     String
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  ip         String?
+  createdAt  DateTime     @default(now())
+}
+
+// ─── Automation ────────────────────────────────────────────────────────────────
+
+model AutomationRule {
+  id        String            @id @default(cuid())
+  name      String
+  trigger   AutomationTrigger
+  action    AutomationAction
+  config    Json?
+  active    Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+// ─── Marketing Reports ─────────────────────────────────────────────────────────
+
+model MarketingReport {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type      String
+  period    String
+  data      Json
+  createdAt DateTime @default(now())
+}
+
+// ─── Existing CMS Models ───────────────────────────────────────────────────────
+
+model Portfolio {
+  id           String   @id @default(cuid())
+  title        String
+  slug         String   @unique
+  description  String   @db.Text
+  shortDesc    String?
+  thumbnail    String
+  gallery      String[] @default([])
+  technologies String[] @default([])
+  category     String
+  liveUrl      String?
+  challenge    String?  @db.Text
+  solution     String?  @db.Text
+  results      String?  @db.Text
+  featured     Boolean  @default(false)
+  published    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Blog {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String   @db.Text
+  excerpt     String?
+  thumbnail   String?
+  category    String?
+  tags        String[] @default([])
+  published   Boolean  @default(true)
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Testimonial {
+  id          String   @id @default(cuid())
+  clientName  String
+  company     String?
+  role        String?
+  image       String?
+  rating      Int      @default(5)
+  review      String   @db.Text
+  videoUrl    String?
+  featured    Boolean  @default(false)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  name      String
+  role      String
+  bio       String?  @db.Text
+  image     String?
+  linkedin  String?
+  twitter   String?
+  order     Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Career {
+  id           String        @id @default(cuid())
+  title        String
+  slug         String        @unique
+  department   String
+  location     String
+  type         String        @default("Full-time")
+  salary       String?
+  description  String        @db.Text
+  requirements String[]      @default([])
+  published    Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  applications Application[]
+}
+
+model Application {
+  id        String   @id @default(cuid())
+  careerId  String
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  phone     String?
+  resume    String?
+  cover     String?  @db.Text
+  createdAt DateTime @default(now())
+}
+
+model Settings {
+  id              String   @id @default("default")
+  companyName     String   @default("Nexus Digital")
+  tagline         String?
+  email           String?
+  phone           String?
+  address         String?
+  logo            String?
+  favicon         String?
+  socialTwitter   String?
+  socialLinkedin  String?
+  socialInstagram String?
+  socialFacebook  String?
+  socialYoutube   String?
+  calendlyUrl     String?
+  seoTitle        String?
+  seoDescription  String?
+  seoKeywords     String?
+  smtpHost        String?
+  smtpPort        Int?
+  smtpUser        String?
+  smtpPass        String?
+  stripeKey       String?
+  paypalEmail     String?
+  pusherKey       String?
+  s3Bucket        String?
+  openaiKey       String?
+  customDomain    String?
+  updatedAt       DateTime @updatedAt
+}
+
+model Newsletter {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
