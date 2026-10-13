@@ -1,0 +1,83 @@
+{
+  "name": "Client Onboarding - Welcome to Project",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "client-onboarding",
+        "responseMode": "onReceived"
+      },
+      "id": "webhook-onboarding",
+      "name": "Onboarding Events",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "client-onboarding"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "client.created",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "if-client-created",
+      "name": "Client created?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "consultation.booked",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "if-consultation",
+      "name": "Consultation booked?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [500, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SITE_URL || 'http://localhost:3000' }}/api/webhooks/n8n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"meeting.create\",\n  \"payload\": {\n    \"title\": \"Kickoff - {{ $json.data.name }}\",\n    \"startTime\": \"{{ $json.data.scheduledAt }}\",\n    \"endTime\": \"{{ $json.data.scheduledAt }}\",\n    \"creatorId\": \"REPLACE_ADMIN_USER_ID\",\n    \"description\": \"Auto-scheduled kickoff from n8n\"\n  }\n}"
+      },
+      "id": "kickoff-meeting",
+      "name": "Schedule Kickoff",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [780, 500]
+    }
+  ],
+  "connections": {
+    "Onboarding Events": {
+      "main": [
+        [
+          { "node": "Client created?", "type": "main", "index": 0 },
+          { "node": "Consultation booked?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Consultation booked?": {
+      "main": [[{ "node": "Schedule Kickoff", "type": "main", "index": 0 }], []]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

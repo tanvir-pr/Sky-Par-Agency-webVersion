@@ -1,0 +1,88 @@
+{
+  "name": "Lead Management - Capture to CRM",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-management",
+        "responseMode": "onReceived"
+      },
+      "id": "webhook-lead",
+      "name": "Lead Events",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "lead-management"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "lead.created",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "if-lead-created",
+      "name": "Is lead.created?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SITE_URL || 'http://localhost:3000' }}/api/webhooks/n8n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"lead.assign\",\n  \"payload\": {\n    \"leadId\": \"{{ $json.data.id }}\",\n    \"userId\": \"REPLACE_WITH_SALES_USER_ID\"\n  }\n}"
+      },
+      "id": "assign-sales",
+      "name": "Assign Sales Rep",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [780, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-N8N-Signature", "value": "nexus-n8n-dev-secret-2026" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"notification.admin\",\n  \"payload\": {\n    \"title\": \"New Lead\",\n    \"body\": \"{{ $json.data.name }} ({{ $json.data.email }}) submitted a lead\"\n  }\n}"
+      },
+      "id": "notify-admin",
+      "name": "Notify Admin",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [780, 400]
+    }
+  ],
+  "connections": {
+    "Lead Events": {
+      "main": [[{ "node": "Is lead.created?", "type": "main", "index": 0 }]]
+    },
+    "Is lead.created?": {
+      "main": [
+        [
+          { "node": "Assign Sales Rep", "type": "main", "index": 0 },
+          { "node": "Notify Admin", "type": "main", "index": 0 }
+        ],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

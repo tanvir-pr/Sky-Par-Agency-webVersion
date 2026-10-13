@@ -1,0 +1,47 @@
+{
+  "name": "Lead Generation - Multi Channel Inbound",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-generation-inbound",
+        "responseMode": "onReceived"
+      },
+      "id": "webhook-external",
+      "name": "External Channel Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "lead-generation-inbound",
+      "notes": "Connect Facebook Lead Ads, WhatsApp, LinkedIn, etc. here"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SITE_URL || 'http://localhost:3000' }}/api/webhooks/inbound",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-N8N-Signature", "value": "={{ $env.N8N_WEBHOOK_SECRET }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $json.name || $json.full_name }}\",\n  \"email\": \"{{ $json.email }}\",\n  \"phone\": \"{{ $json.phone }}\",\n  \"source\": \"{{ $json.source || 'Facebook' }}\",\n  \"channel\": \"{{ $json.channel || 'Lead Ad' }}\",\n  \"message\": \"{{ $json.message || '' }}\",\n  \"metadata\": {{ JSON.stringify($json) }}\n}"
+      },
+      "id": "push-to-crm",
+      "name": "Push to Website CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "External Channel Webhook": {
+      "main": [[{ "node": "Push to Website CRM", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
